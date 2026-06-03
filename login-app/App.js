@@ -3,8 +3,9 @@ import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons'; // Biblioteca de ícones padrão do Expo
+import { Ionicons } from '@expo/vector-icons';
 
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import LoginScreen from './src/screens/LoginScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
@@ -13,34 +14,28 @@ import MaterialScreen from './src/screens/MaterialScreen';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Este componente é o menu inferior com as 4 opções que você pediu
 function HomeTabs() {
+  const { theme } = useTheme(); // Pega o tema atual (light ou dark)
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        headerStyle: { backgroundColor: '#1e1e1e' },
-        headerTintColor: '#fff',
+        headerStyle: { backgroundColor: theme.card },
+        headerTintColor: theme.text,
         tabBarStyle: { 
-          backgroundColor: '#1e1e1e', 
-          borderTopColor: '#333',
+          backgroundColor: theme.tabBar, 
+          borderTopColor: theme.border,
           paddingBottom: 5,
           height: 60
         },
-        tabBarActiveTintColor: '#ff6600', // Cor do ícone ativo
-        tabBarInactiveTintColor: '#888',   // Cor do ícone inativo
+        tabBarActiveTintColor: theme.button,
+        tabBarInactiveTintColor: theme.textSecondary,
         tabBarIcon: ({ color, size }) => {
           let iconName;
-
-          // Define os ícones para cada aba do rodapé automaticamente
-          if (route.name === 'Dashboard') {
-            iconName = 'grid-outline';
-          } else if (route.name === 'Material') {
-            iconName = 'cloud-upload-outline';
-          } else if (route.name === 'Perfil') {
-            iconName = 'person-outline';
-          } else if (route.name === 'Sair') {
-            iconName = 'log-out-outline';
-          }
+          if (route.name === 'Dashboard') iconName = 'grid-outline';
+          else if (route.name === 'Material') iconName = 'cloud-upload-outline';
+          else if (route.name === 'Perfil') iconName = 'person-outline';
+          else if (route.name === 'Sair') iconName = 'log-out-outline';
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -49,14 +44,13 @@ function HomeTabs() {
       <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ title: 'Painel' }} />
       <Tab.Screen name="Material" component={MaterialScreen} options={{ title: 'Subir Material' }} />
       <Tab.Screen name="Perfil" component={ProfileScreen} options={{ title: 'Meu Perfil' }} />
-      {/* A aba Sair vai usar o mesmo componente de perfil por segurança estrutural, mas vamos interceptar o clique */}
       <Tab.Screen 
         name="Sair" 
         component={ProfileScreen} 
         listeners={({ navigation }) => ({
           tabPress: (e) => {
-            e.preventDefault(); // Previne a navegação para a tela
-            navigation.replace('Login'); // Joga o usuário de volta para o login
+            e.preventDefault();
+            navigation.replace('Login');
           },
         })}
       />
@@ -64,23 +58,24 @@ function HomeTabs() {
   );
 }
 
-export default function App() {
+// Criamos um componente interno para gerenciar a StatusBar dinâmica
+function MainNavigation() {
+  const { theme } = useTheme();
   return (
     <NavigationContainer>
-      <StatusBar style="light" />
+      <StatusBar style={theme.statusBar} />
       <Stack.Navigator initialRouteName="Login">
-        <Stack.Screen 
-          name="Login" 
-          component={LoginScreen} 
-          options={{ headerShown: false }} 
-        />
-        {/* Quando logar, o Stack chama o grupo de abas (Menu inferior) */}
-        <Stack.Screen 
-          name="Home" 
-          component={HomeTabs} 
-          options={{ headerShown: false }} 
-        />
+        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Home" component={HomeTabs} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <MainNavigation />
+    </ThemeProvider>
   );
 }
