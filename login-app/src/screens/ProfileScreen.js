@@ -35,12 +35,9 @@ export default function ProfileScreen({ navigation }) {
           </View>
         ))}
 
-        <TouchableOpacity 
-          style={styles.logoutButton} 
-          onPress={() => navigation.replace('Login')}
-        >
-          <Text style={styles.logoutButtonText}>Sair da Conta</Text>
-        </TouchableOpacity>
+       
+          
+        
       </View>
     </ScrollView>
   );
