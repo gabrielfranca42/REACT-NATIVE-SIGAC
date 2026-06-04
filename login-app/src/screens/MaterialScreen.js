@@ -2,20 +2,28 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 
 export default function MaterialScreen() {
+  const { theme } = useTheme();
   const [tipo, setTipo] = useState('');
   const [cargaHoraria, setCargaHoraria] = useState('');
   const [arquivoSelecionado, setArquivoSelecionado] = useState(null);
+
+  // Lista simulada de arquivos que o aluno já enviou anteriormente
+  const [historicoEnvios, setHistoricoEnvios] = useState([
+    { id: 1, nome: 'certificado_wworkshop_ux.pdf', tipo: 'Palestra / Seminário', horas: 8, status: 'Aprovado' },
+    { id: 2, nome: 'declaracao_estagio_2025.jpeg', tipo: 'Estágio', horas: 40, status: 'Pendente' },
+    { id: 3, nome: 'curso_python_udemy.pdf', tipo: 'Curso de Extensão', horas: 20, status: 'Rejeitado', motivo: 'Documento sem assinatura.' },
+  ]);
 
   const tiposAtividades = [
     'Curso de Extensão', 'Palestra / Seminário', 'Monitoria', 'Estágio', 'Outros Certificados'
   ];
 
   const handleSelecionarArquivo = () => {
-    // Simulação de seleção de arquivo (futuramente usaremos o expo-document-picker ou expo-image-picker)
-    setArquivoSelecionado({ name: 'certificado_react_native.pdf' });
-    Alert.alert('Sucesso', 'Arquivo selecionado com sucesso!');
+    setArquivoSelecionado({ name: 'novo_certificado_aluno.pdf' });
+    Alert.alert('Sucesso', 'Arquivo anexado temporariamente!');
   };
 
   const handleEnviar = () => {
@@ -24,24 +32,40 @@ export default function MaterialScreen() {
       return;
     }
 
-    Alert.alert(
-      'Enviado com Sucesso',
-      `Seu certificado de "${tipo}" com ${cargaHoraria}h foi enviado para a validação do coordenador.`
-    );
+    // Cria o novo item para adicionar no topo da lista do histórico
+    const novoEnvio = {
+      id: Date.now(),
+      nome: arquivoSelecionado.name,
+      tipo: tipo,
+      horas: parseInt(cargaHoraria),
+      status: 'Pendente'
+    };
+
+    setHistoricoEnvios([novoEnvio, ...historicoEnvios]);
+    Alert.alert('Sucesso', 'Enviado para a análise do coordenador!');
     
-    // Limpa o formulário após enviar
+    // Limpa o formulário
     setTipo('');
     setCargaHoraria('');
     setArquivoSelecionado(null);
   };
 
-  return (
-    <ScrollView style={styles.container}>
-      <View style={styles.card}>
-        <Text style={styles.title}>Subir Novo Certificado</Text>
-        <Text style={styles.subtitle}>Envie seus documentos para análise da coordenação</Text>
+  // Função auxiliar para pintar a tag de status correta
+  const obterCorStatus = (status) => {
+    if (status === 'Aprovado') return '#34c759'; // Verde
+    if (status === 'Pendente') return '#e6a23c'; // Laranja
+    return '#ff3b30'; // Vermelho
+  };
 
-        <Text style={styles.label}>Tipo de Atividade</Text>
+  return (
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
+      
+      {/* SEÇÃO 1: Formulário de Envio */}
+      <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
+        <Text style={[styles.title, { color: theme.text }]}>Subir Novo Certificado</Text>
+        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Envie seus documentos para análise da coordenação</Text>
+
+        <Text style={[styles.label, { color: theme.text }]}>Tipo de Atividade</Text>
         <View style={styles.pickerSimulado}>
           {tiposAtividades.map((item) => (
             <TouchableOpacity 
@@ -54,9 +78,9 @@ export default function MaterialScreen() {
           ))}
         </View>
 
-        <Text style={styles.label}>Carga Horária (em horas)</Text>
+        <Text style={[styles.label, { color: theme.text }]}>Carga Horária (em horas)</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: theme.input, color: theme.text, borderColor: theme.border }]}
           placeholder="Ex: 20"
           placeholderTextColor="#888"
           keyboardType="numeric"
@@ -64,7 +88,7 @@ export default function MaterialScreen() {
           onChangeText={setCargaHoraria}
         />
 
-        <Text style={styles.label}>Documento (JPEG ou PDF)</Text>
+        <Text style={[styles.label, { color: theme.text }]}>Documento (JPEG ou PDF)</Text>
         <TouchableOpacity style={styles.uploadButton} onPress={handleSelecionarArquivo}>
           <Ionicons name="document-attach-outline" size={24} color="#007AFF" />
           <Text style={styles.uploadButtonText}>
@@ -76,24 +100,71 @@ export default function MaterialScreen() {
           <Text style={styles.submitButtonText}>Enviar para o Coordenador</Text>
         </TouchableOpacity>
       </View>
+
+      {/* SEÇÃO 2: Histórico de Documentos Enviados */}
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>Meus Envios ({historicoEnvios.length})</Text>
+
+      {historicoEnvios.map((envio) => (
+        <View key={envio.id} style={[styles.itemHistorico, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <View style={styles.historicoHeader}>
+            <View style={styles.arquivoInfo}>
+              <Ionicons name="document-text-outline" size={20} color={theme.textSecondary} style={{ marginRight: 6 }} />
+              <Text style={[styles.nomeArquivo, { color: theme.text }]} numberOfLines={1}>
+                {envio.name || envio.nome}
+              </Text>
+            </View>
+            {/* Tag de Status Dinâmica */}
+            <View style={[styles.tagStatus, { backgroundColor: obterCorStatus(envio.status) + '22', borderColor: obterCorStatus(envio.status) }]}>
+              <Text style={[styles.tagStatusText, { color: obterCorStatus(envio.status) }]}>{envio.status}</Text>
+            </View>
+          </View>
+
+          <View style={styles.historicoDetalhes}>
+            <Text style={{ color: theme.textSecondary, fontSize: 13 }}>Tipo: <Text style={{ color: theme.text, fontWeight: '500' }}>{envio.tipo}</Text></Text>
+            <Text style={{ color: theme.textSecondary, fontSize: 13 }}>Carga: <Text style={{ color: theme.text, fontWeight: '500' }}>{envio.horas}h</Text></Text>
+          </View>
+
+          {/* Se foi rejeitado, mostra o balão com o motivo do coordenador */}
+          {envio.status === 'Rejeitado' && envio.motivo && (
+            <View style={styles.motivoContainer}>
+              <Text style={styles.motivoText}>❌ Motivo: {envio.motivo}</Text>
+            </View>
+          )}
+        </View>
+      ))}
+
+      {/* Margem inferior de segurança para rolagem */}
+      <View style={{ height: 40 }} />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#121212', padding: 16 },
-  card: { backgroundColor: '#1e1e1e', padding: 20, borderRadius: 16, borderWidth: 1, borderColor: '#333', marginBottom: 30 },
-  title: { fontSize: 22, fontWeight: 'bold', color: '#fff', marginBottom: 4 },
-  subtitle: { fontSize: 14, color: '#aaa', marginBottom: 20 },
-  label: { fontSize: 16, fontWeight: 'bold', color: '#fff', marginBottom: 8, marginTop: 12 },
+  container: { flex: 1, padding: 16 },
+  card: { padding: 20, borderRadius: 16, borderWidth: 1, marginBottom: 24 },
+  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 4 },
+  subtitle: { fontSize: 14, marginBottom: 20 },
+  label: { fontSize: 16, fontWeight: 'bold', marginBottom: 8, marginTop: 12 },
   pickerSimulado: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
   tipoBotao: { backgroundColor: '#2a2a2a', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 20, borderWidth: 1, borderColor: '#444' },
   tipoBotaoAtivo: { backgroundColor: '#007AFF', borderColor: '#007AFF' },
   tipoBotaoText: { color: '#aaa', fontSize: 13 },
   tipoBotaoTextAtivo: { color: '#fff', fontWeight: 'bold' },
-  input: { backgroundColor: '#2a2a2a', color: '#fff', padding: 14, borderRadius: 8, fontSize: 16, borderWidth: 1, borderColor: '#444' },
-  uploadButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#2a2a2a', padding: 16, borderRadius: 8, borderWidth: 1, borderStyle: 'dashed', borderColor: '#007AFF', marginTop: 4, gap: 8 },
+  input: { padding: 14, borderRadius: 8, fontSize: 16, borderWidth: 1 },
+  uploadButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', padding: 16, borderRadius: 8, borderWidth: 1, borderStyle: 'dashed', borderColor: '#007AFF', marginTop: 4, gap: 8 },
   uploadButtonText: { color: '#007AFF', fontSize: 16, fontWeight: 'bold' },
   submitButton: { backgroundColor: '#34c759', padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 24 },
-  submitButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' }
+  submitButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  
+  // Estilos do Histórico
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 12 },
+  itemHistorico: { padding: 14, borderRadius: 12, borderWidth: 1, marginBottom: 12 },
+  historicoHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  arquivoInfo: { flexDirection: 'row', alignItems: 'center', flex: 1, paddingRight: 8 },
+  nomeArquivo: { fontSize: 15, fontWeight: '600' },
+  tagStatus: { paddingVertical: 2, paddingHorizontal: 8, borderRadius: 6, borderWidth: 1 },
+  tagStatusText: { fontSize: 11, fontWeight: 'bold' },
+  historicoDetalhes: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: 'transparent', paddingTop: 4 },
+  motivoContainer: { marginTop: 8, backgroundColor: '#2a1a1a', padding: 8, borderRadius: 6, borderWidth: 1, borderColor: '#ff3b30' },
+  motivoText: { color: '#ff3b30', fontSize: 12, fontWeight: '500' }
 });
