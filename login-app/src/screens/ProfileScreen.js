@@ -1,11 +1,14 @@
 // src/screens/ProfileScreen.js
-import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 
 export default function ProfileScreen({ navigation }) {
   const { isDarkMode, theme, toggleTheme } = useTheme();
+  
+  // Estado para guardar o ID do curso selecionado (começa com o primeiro curso)
+  const [cursoSelecionado, setCursoSelecionado] = useState(1);
 
   const aluno = {
     nome: 'Marcelo Silva',
@@ -16,10 +19,17 @@ export default function ProfileScreen({ navigation }) {
     ]
   };
 
+  const handleSelecionarCurso = (id, nome) => {
+    setCursoSelecionado(id);
+    console.log(`Curso ativo alterado para: ${nome}`);
+    // Futuramente, você pode salvar isso num estado global ou AsyncStorage
+    // para filtrar as horas da Dashboard automaticamente!
+  };
+
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
       
-      {/* Botão de Alternar Tema Superior */}
+      {/* Botão de Alternar Tema */}
       <TouchableOpacity style={[styles.themeToggle, { backgroundColor: theme.card }]} onPress={toggleTheme}>
         <Ionicons name={isDarkMode ? "sunny-outline" : "moon-outline"} size={22} color={theme.text} />
         <Text style={[styles.themeToggleText, { color: theme.text }]}>
@@ -36,14 +46,40 @@ export default function ProfileScreen({ navigation }) {
         <Text style={[styles.sub, { color: theme.textSecondary }]}>Matrícula: {aluno.matricula}</Text>
       </View>
 
-      <Text style={[styles.sectionTitle, { color: theme.text }]}>Cursos Matriculados</Text>
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>Selecione o Curso Ativo</Text>
 
-      {aluno.cursos.map(curso => (
-        <View key={curso.id} style={[styles.cursoCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.cursoNome, { color: theme.text }]}>{curso.nome}</Text>
-          <Text style={styles.cursoPeriodo}>{curso.periodo}</Text>
-        </View>
-      ))}
+      {/* Listagem Interativa de Cursos */}
+      {aluno.cursos.map(curso => {
+        const estaAtivo = cursoSelecionado === curso.id;
+
+        return (
+          <TouchableOpacity 
+            key={curso.id} 
+            activeOpacity={0.7}
+            style={[
+              styles.cursoCard, 
+              { 
+                backgroundColor: theme.card, 
+                borderColor: estaAtivo ? theme.button : theme.border,
+                borderWidth: estaAtivo ? 2 : 1 
+              }
+            ]}
+            onPress={() => handleSelecionarCurso(curso.id, curso.nome)}
+          >
+            <View style={styles.cursoInfo}>
+              <Text style={[styles.cursoNome, { color: theme.text }]}>{curso.nome}</Text>
+              <Text style={styles.cursoPeriodo}>{curso.periodo}</Text>
+            </View>
+            
+            {/* Ícone indicador se o curso está selecionado ou não */}
+            <Ionicons 
+              name={estaAtivo ? "checkmark-circle" : "ellipse-outline"} 
+              size={24} 
+              color={estaAtivo ? theme.button : theme.textSecondary} 
+            />
+          </TouchableOpacity>
+        );
+      })}
 
       <TouchableOpacity 
         style={styles.logoutButton} 
@@ -51,13 +87,16 @@ export default function ProfileScreen({ navigation }) {
       >
         <Text style={styles.logoutText}>Sair da Conta</Text>
       </TouchableOpacity>
-    </View>
+      
+      {/* Espaçamento extra no fim do ScrollView para não cobrir o menu inferior */}
+      <View style={{ height: 40 }} />
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20 },
-  themeToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 10, borderRadius: 25, marginBottom: 16, alignSelf: 'flex-end', gap: 6, borderWidth: 1, borderColor: 'transparent' },
+  themeToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 10, borderRadius: 25, marginBottom: 16, alignSelf: 'flex-end', gap: 6 },
   themeToggleText: { fontSize: 14, fontWeight: '600' },
   profileCard: { alignItems: 'center', padding: 20, borderRadius: 16, borderWidth: 1, marginBottom: 24 },
   avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#007AFF', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
@@ -65,7 +104,8 @@ const styles = StyleSheet.create({
   name: { fontSize: 24, fontWeight: 'bold', marginBottom: 4 },
   sub: { fontSize: 14 },
   sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 12 },
-  cursoCard: { padding: 16, borderRadius: 12, borderWidth: 1, marginBottom: 12 },
+  cursoCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderRadius: 12, marginBottom: 12 },
+  cursoInfo: { flex: 1, paddingRight: 8 },
   cursoNome: { fontSize: 16, fontWeight: 'bold', marginBottom: 4 },
   cursoPeriodo: { color: '#007AFF', fontSize: 14, fontWeight: '600' },
   logoutButton: { backgroundColor: '#FF3B30', padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 12 },
