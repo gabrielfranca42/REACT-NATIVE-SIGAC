@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
+import * as DocumentPicker from 'expo-document-picker';
 
 export default function MaterialScreen() {
   const { theme } = useTheme();
@@ -46,33 +47,72 @@ export default function MaterialScreen() {
     'Curso de Extensão', 'Palestra / Seminário', 'Monitoria', 'Estágio', 'Outros Certificados'
   ];
 
-  const handleSelecionarArquivo = () => {
-    setArquivoSelecionado({ name: 'novo_certificado_aluno.pdf' });
-    Alert.alert('Sucesso', 'Arquivo anexado temporariamente!');
+  const handleSelecionarArquivo = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setArquivoSelecionado(result.assets[0]);
+      }
+    } catch (err) {
+      console.error('Erro ao escolher arquivo', err);
+      Alert.alert('Erro', 'Não foi possível selecionar o arquivo.');
+    }
   };
 
-  const handleEnviar = () => {
+  const handleEnviar = async () => {
     if (!tipo || !cargaHoraria || !arquivoSelecionado) {
       Alert.alert('Atenção', 'Por favor, preencha todos os campos e anexe o certificado.');
       return;
     }
 
-    // Cria o novo item para adicionar no topo da lista do histórico
-    const novoEnvio = {
-      id: Date.now(),
-      nome: arquivoSelecionado.name,
-      tipo: tipo,
-      horas: parseInt(cargaHoraria),
-      status: 'Pendente'
-    };
+    try {
+      const userData = await AsyncStorage.getItem('user');
+      const userObj = JSON.parse(userData);
 
-    setHistoricoEnvios([novoEnvio, ...historicoEnvios]);
-    Alert.alert('Sucesso', 'Enviado para a análise do coordenador!');
-    
-    // Limpa o formulário
-    setTipo('');
-    setCargaHoraria('');
-    setArquivoSelecionado(null);
+      const formData = new FormData();
+      formData.append('student', userObj.id || userObj._id);
+      formData.append('course', userObj.courses[0]);
+      formData.append('title', `Certificado de ${tipo}`);
+      formData.append('category', tipo);
+      formData.append('hoursClaimed', cargaHoraria);
+      
+      formData.append('certificate', {
+        uri: arquivoSelecionado.uri,
+        name: arquivoSelecionado.name,
+        type: arquivoSelecionado.mimeType || 'application/pdf'
+      });
+
+      await api.post('/activities', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      Alert.alert('Sucesso', 'Certificado enviado para análise do coordenador!');
+      
+      setTipo('');
+      setCargaHoraria('');
+      setArquivoSelecionado(null);
+      
+      const { data } = await api.get('/activities', { params: { studentId: userObj.id || userObj._id } });
+      const myActivities = (data || []).map(act => ({
+        id: act._id,
+        nome: act.title || 'Certificado',
+        tipo: act.category,
+        horas: act.hoursClaimed,
+        status: act.status === 'APPROVED' ? 'Aprovado' : act.status === 'PENDING' ? 'Pendente' : 'Rejeitado',
+        motivo: act.feedback || ''
+      }));
+      setHistoricoEnvios(myActivities);
+
+    } catch (error) {
+      console.error('Erro ao enviar atividade:', error);
+      Alert.alert('Erro', 'Ocorreu um erro ao enviar o certificado.');
+    }
   };
 
   // Função auxiliar para pintar a tag de status correta
