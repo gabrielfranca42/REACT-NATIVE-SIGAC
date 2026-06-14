@@ -5,6 +5,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import LoginScreen from './src/screens/LoginScreen';
@@ -17,6 +18,7 @@ const Tab = createBottomTabNavigator();
 
 function HomeTabs() {
   const { theme } = useTheme(); // Pega o tema atual (light ou dark)
+  const insets = useSafeAreaInsets(); // Obtém a área segura inferior do aparelho
 
   return (
     <Tab.Navigator
@@ -33,8 +35,8 @@ function HomeTabs() {
         tabBarStyle: { 
           backgroundColor: theme.tabBar, 
           borderTopColor: theme.border,
-          paddingBottom: 5,
-          height: 60
+          paddingBottom: insets.bottom + 5, // Soma o espaço seguro ao padding
+          height: 60 + insets.bottom // Aumenta a altura para compensar o espaço inferior
         },
         tabBarActiveTintColor: theme.button,
         tabBarInactiveTintColor: theme.textSecondary,
@@ -82,8 +84,10 @@ function MainNavigation() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <MainNavigation />
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <MainNavigation />
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }

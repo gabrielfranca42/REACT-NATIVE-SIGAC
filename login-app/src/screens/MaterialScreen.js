@@ -15,12 +15,25 @@ export default function MaterialScreen() {
   const [historicoEnvios, setHistoricoEnvios] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [tiposAtividades, setTiposAtividades] = useState([]);
+
   useEffect(() => {
     const carregarAtividades = async () => {
       try {
         const userData = await AsyncStorage.getItem('user');
         if (userData) {
           const userObj = JSON.parse(userData);
+          
+          // Buscar categorias reais do curso para o select de tipo
+          if (userObj.courses && userObj.courses.length > 0) {
+            const courseId = userObj.courses[0];
+            const { data: coursesData } = await api.get('/courses');
+            const meuCurso = coursesData.find(c => c._id === courseId);
+            if (meuCurso && meuCurso.categories) {
+              setTiposAtividades(meuCurso.categories.map(cat => cat.name));
+            }
+          }
+
           const { data } = await api.get('/activities', { params: { studentId: userObj.id || userObj._id } });
           
           const myActivities = (data || []).map(act => ({
@@ -42,10 +55,6 @@ export default function MaterialScreen() {
     };
     carregarAtividades();
   }, []);
-
-  const tiposAtividades = [
-    'Curso de Extensão', 'Palestra / Seminário', 'Monitoria', 'Estágio', 'Outros Certificados'
-  ];
 
   const handleSelecionarArquivo = async () => {
     try {
@@ -75,22 +84,34 @@ export default function MaterialScreen() {
 
       const formData = new FormData();
       formData.append('student', userObj.id || userObj._id);
-      formData.append('course', userObj.courses[0]);
+      formData.append('courseId', userObj.courses[0]);
       formData.append('title', `Certificado de ${tipo}`);
       formData.append('category', tipo);
       formData.append('hoursClaimed', cargaHoraria);
       
       formData.append('certificate', {
         uri: arquivoSelecionado.uri,
-        name: arquivoSelecionado.name,
+        name: arquivoSelecionado.name || 'documento.pdf',
         type: arquivoSelecionado.mimeType || 'application/pdf'
       });
 
-      await api.post('/activities', formData, {
+      // NO REACT NATIVE: O Axios tem bugs crônicos para enviar FormData (o body chega vazio ou corrompido no backend).
+      // A solução definitiva aprovada pela comunidade é usar o `fetch` nativo para uploads de arquivos.
+      const token = await AsyncStorage.getItem('token');
+      const response = await fetch('https://projeto-senac-geraldo-1.onrender.com/api/v1/activities', {
+        method: 'POST',
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`,
+          // NÃO definimos Content-Type. O fetch faz isso sozinho e injeta o 'boundary' obrigatório.
         },
+        body: formData
       });
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseData.error || 'Erro desconhecido do servidor');
+      }
 
       Alert.alert('Sucesso', 'Certificado enviado para análise do coordenador!');
       
@@ -110,8 +131,18 @@ export default function MaterialScreen() {
       setHistoricoEnvios(myActivities);
 
     } catch (error) {
-      console.error('Erro ao enviar atividade:', error);
-      Alert.alert('Erro', 'Ocorreu um erro ao enviar o certificado.');
+      console.warn('Erro ao enviar atividade (Log Interno):', error);
+      
+      let mensagemBackend = error.message || 'Ocorreu um erro ao tentar se conectar com o servidor.';
+      
+      // Limpando o texto técnico que o backend envia (ex: "UNPROCESSABLE_ENTITY: ")
+      if (mensagemBackend.includes('UNPROCESSABLE_ENTITY:')) {
+        mensagemBackend = mensagemBackend.replace('UNPROCESSABLE_ENTITY:', '').trim();
+      } else if (mensagemBackend.includes('BAD_REQUEST:')) {
+        mensagemBackend = mensagemBackend.replace('BAD_REQUEST:', '').trim();
+      }
+
+      Alert.alert('Aviso do Sistema', mensagemBackend);
     }
   };
 
