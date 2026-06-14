@@ -11,31 +11,36 @@ import {
   Image
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
+import api from '../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen({ navigation }) {
   const { theme } = useTheme();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!identifier || !password) {
       Alert.alert('Erro', 'Por favor, preencha todos os campos.');
       return;
     }
 
-    // Credenciais de demonstração ajustadas
-    const CREDENCIAIS_DEMO = {
-      usuario: 'alunoteste',
-      senha: '123'
-    };
-
-    if (identifier === CREDENCIAIS_DEMO.usuario && password === CREDENCIAIS_DEMO.senha) {
-      console.log('Login correto! Redirecionando para as Abas Principais (Home)...');
+    try {
+      const response = await api.post('/auth/login', {
+        email: identifier,
+        password: password
+      });
       
-      // Redireciona para a rota 'Home' do App.js que contém as abas do footer
-      navigation.replace('Home'); 
-    } else {
-      Alert.alert('Erro de Autenticação', 'Matrícula ou senha incorretos.');
+      if (response.data && response.data.token) {
+        await AsyncStorage.setItem('token', response.data.token);
+        await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
+        console.log('Login correto! Redirecionando para as Abas Principais (Home)...');
+        navigation.replace('Home'); 
+      }
+    } catch (error) {
+      console.error(error);
+      const errorMessage = error.response?.data?.error || 'Matrícula ou senha incorretos.';
+      Alert.alert('Erro de Autenticação', errorMessage);
     }
   };
 
