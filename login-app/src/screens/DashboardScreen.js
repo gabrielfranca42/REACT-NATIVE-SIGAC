@@ -1,8 +1,10 @@
 // src/screens/DashboardScreen.js
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
 
 export default function DashboardScreen() {
+  const { theme } = useTheme();
   // Dados simulando o total exigido vs o aprovado pelo coordenador
   const resumoHoras = {
     totalExigido: 120,
@@ -18,25 +20,25 @@ export default function DashboardScreen() {
   const progressoGeral = (resumoHoras.totalAprovado / resumoHoras.totalExigido) * 100;
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Card de Visão Geral */}
-      <View style={styles.mainCard}>
-        <Text style={styles.cardTitle}>Horas Complementares</Text>
-        <Text style={styles.progressText}>
+      <View style={[styles.mainCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+        <Text style={[styles.cardTitle, { color: theme.textSecondary }]}>Horas Complementares</Text>
+        <Text style={[styles.progressText, { color: theme.text }]}>
           {resumoHoras.totalAprovado}h de {resumoHoras.totalExigido}h concluídas
         </Text>
         
         {/* Barra de progresso principal */}
         <View style={styles.progressBarBackground}>
-          <View style={[styles.progressBarFill, { width: `${progressoGeral}%` }]} />
+          <View style={[styles.progressBarFill, { width: `${progressoGeral}%`, backgroundColor: theme.button }]} />
         </View>
 
-        <View style={styles.alertaCoordenador}>
-          <Text style={styles.alertaText}>ℹ️ {resumoHoras.statusCoordenador}</Text>
+        <View style={[styles.alertaCoordenador, { backgroundColor: theme.accent + '22', borderColor: theme.accent }]}>
+          <Text style={[styles.alertaText, { color: theme.accent }]}>ℹ️ {resumoHoras.statusCoordenador}</Text>
         </View>
       </View>
 
-      <Text style={styles.sectionTitle}>Progresso por Categoria</Text>
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>Progresso por Categoria</Text>
 
       {/* Listagem do progresso por curso/categoria */}
       {resumoHoras.categorias.map((cat) => {
@@ -44,17 +46,17 @@ export default function DashboardScreen() {
         const pertoDeConcluir = progressoCat >= 75; // Alerta visual se passar de 75%
 
         return (
-          <View key={cat.id} style={styles.categoryCard}>
+          <View key={cat.id} style={[styles.categoryCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <View style={styles.categoryHeader}>
-              <Text style={styles.categoryName}>{cat.nome}</Text>
-              <Text style={styles.categoryHours}>{cat.atuais}h / {cat.meta}h</Text>
+              <Text style={[styles.categoryName, { color: theme.text }]}>{cat.nome}</Text>
+              <Text style={[styles.categoryHours, { color: theme.textSecondary }]}>{cat.atuais}h / {cat.meta}h</Text>
             </View>
 
             <View style={styles.progressBarBackground}>
               <View 
                 style={[
                   styles.progressBarFill, 
-                  { width: `${progressoCat}%`, backgroundColor: pertoDeConcluir ? '#34c759' : '#007AFF' }
+                  { width: `${progressoCat}%`, backgroundColor: pertoDeConcluir ? '#34c759' : theme.button }
                 ]} 
               />
             </View>
@@ -75,7 +77,7 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 16, color: '#aaa', fontWeight: '600', marginBottom: 4 },
   progressText: { fontSize: 24, fontWeight: 'bold', color: '#fff', marginBottom: 12 },
   progressBarBackground: { height: 12, backgroundColor: '#333', borderRadius: 6, overflow: 'hidden', marginBottom: 8 },
-  progressBarFill: { height: '100%', backgroundColor: '#007AFF', borderRadius: 6 },
+  progressBarFill: { height: '100%', backgroundColor: '#004a8d', borderRadius: 6 },
   alertaCoordenador: { marginTop: 12, backgroundColor: '#2a2115', padding: 10, borderRadius: 6, borderWidth: 1, borderColor: '#e6a23c' },
   alertaText: { color: '#e6a23c', fontSize: 13, fontWeight: '500' },
   sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#fff', marginBottom: 12, marginTop: 8 },

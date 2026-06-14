@@ -2,8 +2,10 @@
 import axios from 'axios';
 
 const api = axios.create({
-  // SUBSTITUA PELA SUA URL QUANDO SUBIR O BACKEND (Ex: http://192.168.100.29:5000)
+  
   baseURL: 'http://SEU_IP_LOCAL:5000/api', 
+  // Conectado ao backend oficial no Render
+  //baseURL: 'https://projeto-senac-geraldo-1.onrender.com/api/v1', 
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

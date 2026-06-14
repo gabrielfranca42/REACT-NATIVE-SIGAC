@@ -1,4 +1,5 @@
 import React from 'react';
+import { Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -22,6 +23,13 @@ function HomeTabs() {
       screenOptions={({ route }) => ({
         headerStyle: { backgroundColor: theme.card },
         headerTintColor: theme.text,
+        headerRight: () => (
+          <Image 
+            source={require('./assets/senac-logo.png')} 
+            style={{ width: 80, height: 30, marginRight: 15 }} 
+            resizeMode="contain" 
+          />
+        ),
         tabBarStyle: { 
           backgroundColor: theme.tabBar, 
           borderTopColor: theme.border,

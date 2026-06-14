@@ -90,7 +90,7 @@ export default function MaterialScreen() {
 
         <Text style={[styles.label, { color: theme.text }]}>Documento (JPEG ou PDF)</Text>
         <TouchableOpacity style={styles.uploadButton} onPress={handleSelecionarArquivo}>
-          <Ionicons name="document-attach-outline" size={24} color="#007AFF" />
+          <Ionicons name="document-attach-outline" size={24} color="#004a8d" />
           <Text style={styles.uploadButtonText}>
             {arquivoSelecionado ? arquivoSelecionado.name : 'Selecionar Certificado'}
           </Text>
@@ -147,12 +147,12 @@ const styles = StyleSheet.create({
   label: { fontSize: 16, fontWeight: 'bold', marginBottom: 8, marginTop: 12 },
   pickerSimulado: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
   tipoBotao: { backgroundColor: '#2a2a2a', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 20, borderWidth: 1, borderColor: '#444' },
-  tipoBotaoAtivo: { backgroundColor: '#007AFF', borderColor: '#007AFF' },
+  tipoBotaoAtivo: { backgroundColor: '#004a8d', borderColor: '#004a8d' },
   tipoBotaoText: { color: '#aaa', fontSize: 13 },
   tipoBotaoTextAtivo: { color: '#fff', fontWeight: 'bold' },
   input: { padding: 14, borderRadius: 8, fontSize: 16, borderWidth: 1 },
-  uploadButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', padding: 16, borderRadius: 8, borderWidth: 1, borderStyle: 'dashed', borderColor: '#007AFF', marginTop: 4, gap: 8 },
-  uploadButtonText: { color: '#007AFF', fontSize: 16, fontWeight: 'bold' },
+  uploadButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', padding: 16, borderRadius: 8, borderWidth: 1, borderStyle: 'dashed', borderColor: '#004a8d', marginTop: 4, gap: 8 },
+  uploadButtonText: { color: '#004a8d', fontSize: 16, fontWeight: 'bold' },
   submitButton: { backgroundColor: '#34c759', padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 24 },
   submitButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   

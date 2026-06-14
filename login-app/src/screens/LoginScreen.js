@@ -7,10 +7,13 @@ import {
   TouchableOpacity, 
   Alert, 
   KeyboardAvoidingView, 
-  Platform 
+  Platform,
+  Image
 } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
 
 export default function LoginScreen({ navigation }) {
+  const { theme } = useTheme();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
 
@@ -39,14 +42,21 @@ export default function LoginScreen({ navigation }) {
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.background }]}
     >
-      <View style={styles.formContainer}>
-        <Text style={styles.title}>ValidaÊ</Text>
-        <Text style={styles.subtitle}>Faça login para acessar sua carga horária</Text>
+      <View style={[styles.formContainer, { backgroundColor: theme.card, borderColor: theme.border }]}>
+        <View style={styles.headerContainer}>
+          <Image 
+            source={require('../../assets/senac-logo.png')} 
+            style={styles.logo} 
+            resizeMode="contain" 
+          />
+          <Text style={[styles.title, { color: theme.text }]}>ValidaUP</Text>
+        </View>
+        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Faça login para acessar sua carga horária</Text>
 
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: theme.input, color: theme.text, borderColor: theme.border }]}
           placeholder="E-mail ou Matrícula"
           placeholderTextColor="#888"
           value={identifier}
@@ -56,7 +66,7 @@ export default function LoginScreen({ navigation }) {
         />
 
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: theme.input, color: theme.text, borderColor: theme.border }]}
           placeholder="Senha"
           placeholderTextColor="#888"
           value={password}
@@ -64,7 +74,7 @@ export default function LoginScreen({ navigation }) {
           secureTextEntry
         />
 
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+        <TouchableOpacity style={[styles.button, { backgroundColor: theme.button }]} onPress={handleLogin}>
           <Text style={styles.buttonText}>Entrar</Text>
         </TouchableOpacity>
       </View>
@@ -86,12 +96,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#333',
   },
+  headerContainer: {
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  logo: {
+    width: 150,
+    height: 50,
+    marginBottom: 8,
+  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#fff',
     textAlign: 'center',
-    marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
@@ -110,7 +128,7 @@ const styles = StyleSheet.create({
     borderColor: '#444',
   },
   button: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#004a8d',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',

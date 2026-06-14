@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   themeToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 10, borderRadius: 25, marginBottom: 16, alignSelf: 'flex-end', gap: 6 },
   themeToggleText: { fontSize: 14, fontWeight: '600' },
   profileCard: { alignItems: 'center', padding: 20, borderRadius: 16, borderWidth: 1, marginBottom: 24 },
-  avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#007AFF', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
+  avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#004a8d', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
   avatarText: { color: '#fff', fontSize: 32, fontWeight: 'bold' },
   name: { fontSize: 24, fontWeight: 'bold', marginBottom: 4 },
   sub: { fontSize: 14 },
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
   cursoCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderRadius: 12, marginBottom: 12 },
   cursoInfo: { flex: 1, paddingRight: 8 },
   cursoNome: { fontSize: 16, fontWeight: 'bold', marginBottom: 4 },
-  cursoPeriodo: { color: '#007AFF', fontSize: 14, fontWeight: '600' },
+  cursoPeriodo: { color: '#004a8d', fontSize: 14, fontWeight: '600' },
   logoutButton: { backgroundColor: '#FF3B30', padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 12 },
   logoutText: { color: '#fff', fontSize: 16, fontWeight: 'bold' }
 });

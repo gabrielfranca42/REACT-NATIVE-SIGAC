@@ -10,7 +10,8 @@ export const temas = {
     textSecondary: '#636366',
     border: '#E5E5EA',
     input: '#E9E9EB',
-    button: '#007AFF',
+    button: '#004a8d', // Azul Senac
+    accent: '#f39200', // Laranja Senac
     tabBar: '#FFFFFF',
     statusBar: 'dark'
   },
@@ -21,14 +22,15 @@ export const temas = {
     textSecondary: '#AAAAAA',
     border: '#333333',
     input: '#2a2a2a',
-    button: '#007AFF',
+    button: '#004a8d', // Azul Senac
+    accent: '#f39200', // Laranja Senac
     tabBar: '#1e1e1e',
     statusBar: 'light'
   }
 };
 
 export function ThemeProvider({ children }) {
-  const [isDarkMode, setIsDarkMode] = useState(true); // Começa no dark padrão que você já tinha
+  const [isDarkMode, setIsDarkMode] = useState(false); // Mudado para false (Modo Claro padrão Senac)
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
