@@ -1,21 +1,72 @@
 // src/screens/DashboardScreen.js
-import React from 'react';
-import { StyleSheet, Text, View, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, ScrollView, ActivityIndicator } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '../services/api';
 
 export default function DashboardScreen() {
   const { theme } = useTheme();
-  // Dados simulando o total exigido vs o aprovado pelo coordenador
-  const resumoHoras = {
-    totalExigido: 120,
-    totalAprovado: 75,
-    statusCoordenador: "2 certificados aguardando análise",
-    categorias: [
-      { id: 1, nome: "Cursos de Extensão", atuais: 40, meta: 50 },
-      { id: 2, nome: "Palestras e Eventos", atuais: 15, meta: 20 },
-      { id: 3, nome: "Estágio / Monitoria", atuais: 20, meta: 50 },
-    ]
-  };
+  const [resumoHoras, setResumoHoras] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const carregarEstatisticas = async () => {
+      try {
+        const userData = await AsyncStorage.getItem('user');
+        if (userData) {
+          const userObj = JSON.parse(userData);
+          if (userObj.courses && userObj.courses.length > 0) {
+            const courseId = userObj.courses[0];
+            const [coursesRes, activitiesRes] = await Promise.all([
+              api.get('/courses'),
+              api.get('/activities', { params: { studentId: userObj.id || userObj._id } })
+            ]);
+            
+            const meuCurso = coursesRes.data.find(c => c._id === courseId);
+            const minhasAtividades = activitiesRes.data || [];
+            
+            const atividadesAprovadas = minhasAtividades.filter(a => a.status === 'APPROVED');
+            const totalAprovado = atividadesAprovadas.reduce((acc, curr) => acc + (curr.hoursClaimed || 0), 0);
+            const pendentes = minhasAtividades.filter(a => a.status === 'PENDING').length;
+            
+            const categoriasProgresso = (meuCurso?.categories || []).map((cat, index) => {
+              const aprovadasNaCat = atividadesAprovadas
+                .filter(a => a.category === cat.name)
+                .reduce((acc, curr) => acc + (curr.hoursClaimed || 0), 0);
+              return {
+                id: cat._id || index,
+                nome: cat.name,
+                atuais: aprovadasNaCat,
+                meta: cat.maxHours
+              };
+            });
+
+            setResumoHoras({
+              totalExigido: meuCurso?.totalHoursRequired || 120,
+              totalAprovado: totalAprovado,
+              statusCoordenador: `${pendentes} certificados aguardando análise`,
+              categorias: categoriasProgresso
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao buscar estatísticas do dashboard:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    carregarEstatisticas();
+  }, []);
+
+  if (loading) {
+    return <View style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }]}><ActivityIndicator size="large" color={theme.button} /></View>;
+  }
+
+  if (!resumoHoras) {
+    return <View style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }]}><Text style={{color: theme.text}}>Nenhum dado encontrado.</Text></View>;
+  }
 
   const progressoGeral = (resumoHoras.totalAprovado / resumoHoras.totalExigido) * 100;
 
