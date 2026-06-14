@@ -1,6 +1,6 @@
 // src/screens/MaterialScreen.js
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, ScrollView, ActivityIndicator, Linking, Modal, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,6 +14,7 @@ export default function MaterialScreen() {
   const [arquivoSelecionado, setArquivoSelecionado] = useState(null);
   const [historicoEnvios, setHistoricoEnvios] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [certificadoAberto, setCertificadoAberto] = useState(null); // Estado para controlar o modal
 
   const [tiposAtividades, setTiposAtividades] = useState([]);
 
@@ -42,7 +43,8 @@ export default function MaterialScreen() {
             tipo: act.category,
             horas: act.hoursClaimed,
             status: act.status === 'APPROVED' ? 'Aprovado' : act.status === 'PENDING' ? 'Pendente' : 'Rejeitado',
-            motivo: act.feedback || ''
+            motivo: act.feedback || '',
+            fileUrl: act.fileUrl || ''
           }));
           
           setHistoricoEnvios(myActivities);
@@ -126,7 +128,8 @@ export default function MaterialScreen() {
         tipo: act.category,
         horas: act.hoursClaimed,
         status: act.status === 'APPROVED' ? 'Aprovado' : act.status === 'PENDING' ? 'Pendente' : 'Rejeitado',
-        motivo: act.feedback || ''
+        motivo: act.feedback || '',
+        fileUrl: act.fileUrl || ''
       }));
       setHistoricoEnvios(myActivities);
 
@@ -201,7 +204,18 @@ export default function MaterialScreen() {
       <Text style={[styles.sectionTitle, { color: theme.text }]}>Meus Envios ({historicoEnvios.length})</Text>
 
       {historicoEnvios.map((envio) => (
-        <View key={envio.id} style={[styles.itemHistorico, { backgroundColor: theme.card, borderColor: theme.border }]}>
+        <TouchableOpacity 
+          key={envio.id} 
+          style={[styles.itemHistorico, { backgroundColor: theme.card, borderColor: theme.border }]}
+          onPress={() => {
+            if (envio.fileUrl) {
+              setCertificadoAberto(envio);
+            } else {
+              Alert.alert('Aviso', 'Este envio não possui um arquivo anexo.');
+            }
+          }}
+          activeOpacity={0.7}
+        >
           <View style={styles.historicoHeader}>
             <View style={styles.arquivoInfo}>
               <Ionicons name="document-text-outline" size={20} color={theme.textSecondary} style={{ marginRight: 6 }} />
@@ -226,11 +240,80 @@ export default function MaterialScreen() {
               <Text style={styles.motivoText}>❌ Motivo: {envio.motivo}</Text>
             </View>
           )}
-        </View>
+        </TouchableOpacity>
       ))}
 
       {/* Margem inferior de segurança para rolagem */}
       <View style={{ height: 40 }} />
+
+      {/* MODAL DE VISUALIZAÇÃO DO CERTIFICADO */}
+      <Modal
+        visible={!!certificadoAberto}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setCertificadoAberto(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Detalhes do Envio</Text>
+              <TouchableOpacity onPress={() => setCertificadoAberto(null)} style={styles.closeButton}>
+                <Ionicons name="close" size={24} color={theme.text} />
+              </TouchableOpacity>
+            </View>
+
+            {certificadoAberto && (
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <View style={[styles.modalInfoBox, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                  <Text style={[styles.modalInfoLabel, { color: theme.textSecondary }]}>Tipo de Atividade</Text>
+                  <Text style={[styles.modalInfoValue, { color: theme.text }]}>{certificadoAberto.tipo}</Text>
+                  
+                  <Text style={[styles.modalInfoLabel, { color: theme.textSecondary, marginTop: 12 }]}>Carga Horária</Text>
+                  <Text style={[styles.modalInfoValue, { color: theme.text }]}>{certificadoAberto.horas} horas</Text>
+                  
+                  <Text style={[styles.modalInfoLabel, { color: theme.textSecondary, marginTop: 12 }]}>Status</Text>
+                  <Text style={[styles.modalInfoValue, { color: obterCorStatus(certificadoAberto.status) }]}>{certificadoAberto.status}</Text>
+                </View>
+
+                <Text style={[styles.modalImageLabel, { color: theme.text }]}>Documento Anexado:</Text>
+                
+                {certificadoAberto.fileUrl && certificadoAberto.fileUrl.toLowerCase().endsWith('.pdf') ? (
+                  <View style={styles.pdfContainer}>
+                    <Ionicons name="document-text" size={48} color={theme.textSecondary} style={{ marginBottom: 12 }} />
+                    <Text style={{ color: theme.text, marginBottom: 16, textAlign: 'center' }}>
+                      Este arquivo é um PDF e não pode ser visualizado diretamente aqui.
+                    </Text>
+                    <TouchableOpacity 
+                      style={styles.pdfButton}
+                      onPress={() => {
+                        const urlCompleta = certificadoAberto.fileUrl.startsWith('http') 
+                          ? certificadoAberto.fileUrl 
+                          : `https://projeto-senac-geraldo-1.onrender.com${certificadoAberto.fileUrl}`;
+                        Linking.openURL(urlCompleta);
+                      }}
+                    >
+                      <Ionicons name="open-outline" size={20} color="#fff" />
+                      <Text style={styles.pdfButtonText}>Abrir PDF Externamente</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <View style={styles.imageContainer}>
+                    <Image 
+                      source={{ 
+                        uri: certificadoAberto.fileUrl.startsWith('http') 
+                          ? certificadoAberto.fileUrl 
+                          : `https://projeto-senac-geraldo-1.onrender.com${certificadoAberto.fileUrl}` 
+                      }} 
+                      style={styles.certificadoImagem}
+                      resizeMode="contain"
+                    />
+                  </View>
+                )}
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -262,5 +345,23 @@ const styles = StyleSheet.create({
   tagStatusText: { fontSize: 11, fontWeight: 'bold' },
   historicoDetalhes: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: 'transparent', paddingTop: 4 },
   motivoContainer: { marginTop: 8, backgroundColor: '#2a1a1a', padding: 8, borderRadius: 6, borderWidth: 1, borderColor: '#ff3b30' },
-  motivoText: { color: '#ff3b30', fontSize: 12, fontWeight: '500' }
+  motivoText: { color: '#ff3b30', fontSize: 12, fontWeight: '500' },
+  
+  // Estilos do Modal de Visualização
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 16 },
+  modalContent: { borderRadius: 16, padding: 20, maxHeight: '85%' },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  modalTitle: { fontSize: 20, fontWeight: 'bold' },
+  closeButton: { padding: 4 },
+  modalInfoBox: { padding: 16, borderRadius: 12, borderWidth: 1, marginBottom: 20 },
+  modalInfoLabel: { fontSize: 13, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 0.5 },
+  modalInfoValue: { fontSize: 16, fontWeight: '600', marginTop: 2 },
+  modalImageLabel: { fontSize: 16, fontWeight: 'bold', marginBottom: 12 },
+  imageContainer: { width: '100%', aspectRatio: 1, borderRadius: 12, overflow: 'hidden', backgroundColor: '#e5e5ea' },
+  certificadoImagem: { width: '100%', height: '100%' },
+  
+  // Estilos específicos para PDFs
+  pdfContainer: { width: '100%', padding: 20, borderRadius: 12, backgroundColor: '#f0f0f5', alignItems: 'center', justifyContent: 'center' },
+  pdfButton: { flexDirection: 'row', backgroundColor: '#004a8d', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, alignItems: 'center', gap: 8 },
+  pdfButtonText: { color: '#fff', fontSize: 15, fontWeight: 'bold' }
 });
