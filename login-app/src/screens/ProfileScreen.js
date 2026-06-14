@@ -1,29 +1,58 @@
 // src/screens/ProfileScreen.js
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '../services/api';
 
 export default function ProfileScreen({ navigation }) {
   const { isDarkMode, theme, toggleTheme } = useTheme();
   
-  // Estado para guardar o ID do curso selecionado (começa com o primeiro curso)
-  const [cursoSelecionado, setCursoSelecionado] = useState(1);
+  const [cursoSelecionado, setCursoSelecionado] = useState(null);
+  const [aluno, setAluno] = useState({ nome: '', matricula: '', cursos: [] });
+  const [loading, setLoading] = useState(true);
 
-  const aluno = {
-    nome: 'Marcelo Silva',
-    matricula: '202610984',
-    cursos: [
-      { id: 1, nome: 'Análise e Desenvolvimento de Sistemas', periodo: '2º Período' },
-      { id: 2, nome: 'Desenvolvimento Mobile Avançado', periodo: 'Extensão' }
-    ]
-  };
+  useEffect(() => {
+    const carregarPerfil = async () => {
+      try {
+        const userData = await AsyncStorage.getItem('user');
+        if (userData) {
+          const userObj = JSON.parse(userData);
+          const { data: coursesData } = await api.get('/courses');
+          
+          const meusCursos = coursesData
+            .filter(c => (userObj.courses || []).includes(c._id))
+            .map(c => ({ id: c._id, nome: c.name, periodo: 'Matriculado' }));
+
+          setAluno({
+            nome: userObj.name,
+            matricula: userObj.matricula || userObj.email,
+            cursos: meusCursos
+          });
+
+          if (meusCursos.length > 0) {
+            setCursoSelecionado(meusCursos[0].id);
+          }
+        }
+      } catch (err) {
+        console.error('Erro ao carregar perfil', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    carregarPerfil();
+  }, []);
 
   const handleSelecionarCurso = (id, nome) => {
     setCursoSelecionado(id);
     console.log(`Curso ativo alterado para: ${nome}`);
-    // Futuramente, você pode salvar isso num estado global ou AsyncStorage
-    // para filtrar as horas da Dashboard automaticamente!
+  };
+
+  const handleLogout = async () => {
+    await AsyncStorage.removeItem('token');
+    await AsyncStorage.removeItem('user');
+    navigation.replace('Login');
   };
 
   return (
@@ -83,7 +112,7 @@ export default function ProfileScreen({ navigation }) {
 
       <TouchableOpacity 
         style={styles.logoutButton} 
-        onPress={() => navigation.replace('Login')}
+        onPress={handleLogout}
       >
         <Text style={styles.logoutText}>Sair da Conta</Text>
       </TouchableOpacity>

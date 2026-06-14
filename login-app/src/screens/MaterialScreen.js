@@ -1,21 +1,46 @@
 // src/screens/MaterialScreen.js
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '../services/api';
 
 export default function MaterialScreen() {
   const { theme } = useTheme();
   const [tipo, setTipo] = useState('');
   const [cargaHoraria, setCargaHoraria] = useState('');
   const [arquivoSelecionado, setArquivoSelecionado] = useState(null);
+  const [historicoEnvios, setHistoricoEnvios] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Lista simulada de arquivos que o aluno já enviou anteriormente
-  const [historicoEnvios, setHistoricoEnvios] = useState([
-    { id: 1, nome: 'certificado_wworkshop_ux.pdf', tipo: 'Palestra / Seminário', horas: 8, status: 'Aprovado' },
-    { id: 2, nome: 'declaracao_estagio_2025.jpeg', tipo: 'Estágio', horas: 40, status: 'Pendente' },
-    { id: 3, nome: 'curso_python_udemy.pdf', tipo: 'Curso de Extensão', horas: 20, status: 'Rejeitado', motivo: 'Documento sem assinatura.' },
-  ]);
+  useEffect(() => {
+    const carregarAtividades = async () => {
+      try {
+        const userData = await AsyncStorage.getItem('user');
+        if (userData) {
+          const userObj = JSON.parse(userData);
+          const { data } = await api.get('/activities', { params: { studentId: userObj.id || userObj._id } });
+          
+          const myActivities = (data || []).map(act => ({
+            id: act._id,
+            nome: act.title || 'Certificado',
+            tipo: act.category,
+            horas: act.hoursClaimed,
+            status: act.status === 'APPROVED' ? 'Aprovado' : act.status === 'PENDING' ? 'Pendente' : 'Rejeitado',
+            motivo: act.feedback || ''
+          }));
+          
+          setHistoricoEnvios(myActivities);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar atividades:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    carregarAtividades();
+  }, []);
 
   const tiposAtividades = [
     'Curso de Extensão', 'Palestra / Seminário', 'Monitoria', 'Estágio', 'Outros Certificados'
