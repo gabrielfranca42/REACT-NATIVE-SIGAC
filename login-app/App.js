@@ -16,9 +16,10 @@ import MaterialScreen from './src/screens/MaterialScreen';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
+// Função que configura a navegação por abas na parte inferior do aplicativo
 function HomeTabs() {
-  const { theme } = useTheme(); // Pega o tema atual (light ou dark)
-  const insets = useSafeAreaInsets(); // Obtém a área segura inferior do aparelho
+  const { theme } = useTheme(); // Pega o tema atual (claro ou escuro) do contexto
+  const insets = useSafeAreaInsets(); // Obtém as margens de área segura (especialmente a inferior) do aparelho
 
   return (
     <Tab.Navigator
@@ -68,7 +69,7 @@ function HomeTabs() {
   );
 }
 
-// Criamos um componente interno para gerenciar a StatusBar dinâmica
+// Componente de navegação principal, que gerencia as rotas em pilha (Stack) e a cor da barra de status
 function MainNavigation() {
   const { theme } = useTheme();
   return (
@@ -82,6 +83,7 @@ function MainNavigation() {
   );
 }
 
+// Ponto de entrada principal do Aplicativo, providenciando o contexto de Área Segura e Temas
 export default function App() {
   return (
     <SafeAreaProvider>
